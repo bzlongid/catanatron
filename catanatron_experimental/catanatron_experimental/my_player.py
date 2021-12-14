@@ -147,8 +147,8 @@ class Node:
 
 class MyPlayer(Player):
     
-    def expand(node, player):
-        for successor in get_possible_moves(node.board, player):
+    def expand(node, player, playable_actions):
+        for successor in playable_actions:
             child = None
         try:
             child = node.add_child(successor.next_player(player))
@@ -157,10 +157,10 @@ class MyPlayer(Player):
             pass
         return child
 
-    def tree_policy(self, node, player):
+    def tree_policy(self, node, player, playable_actions):
         while get_score(node.board) == None:
-            if len(node.children) < len(get_possible_moves(node.board, player)):
-                return self.expand(node, player)
+            if len(node.children) < len(playable_actions):
+                return self.expand(node, player, playable_actions)
             else:
                 node = self.tree_policy(self.best_child(node), next_player(player))
         return node
@@ -186,10 +186,9 @@ class MyPlayer(Player):
         node.count += 1
         self.backup(node.parent, score)
 
-    def default_policy(node):
+    def default_policy(node, playable_actions):
         while get_score(node.board) == None:
-            next_moves = get_possible_moves(node.board, next_player(node.player))
-            node.board = np.random.choice(next_moves)
+            node.board = np.random.choice(playable_actions)
         score = get_score(node.board)
         final_board = node.board
         return score
@@ -208,8 +207,8 @@ class MyPlayer(Player):
         # return playable_actions[0]
         start_node = Node(Game,None,'max')
         for iteration in range(25): # we chose 25 in the interest of time
-            v = self.tree_policy(start_node, 'max')
-            value = self.default_policy(v)
+            v = self.tree_policy(start_node, 'max', playable_actions)
+            value = self.default_policy(v, playable_actions)
             self.backup(v,value)
         action = self.best_child(start_node,0).board
         return action
